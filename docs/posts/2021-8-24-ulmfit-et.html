@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="This notebook contains codes for finetunning AWD-LSTM language model Using ULMFIT Approach for text classification in Estonian Language">
+
+<title>letheAI - Estonian ULMFIT</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">letheAI</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com" rel="" target=""><i class="bi bi-twitter" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Estonian ULMFIT</h1>
+                  <div>
+        <div class="description">
+          This notebook contains codes for finetunning AWD-LSTM language model Using ULMFIT Approach for text classification in Estonian Language
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<p>In this post, I want to finetune our language model and doing text classification using ULMFIT approach for Estonian language. Note on the Language model:</p>
+<p>Here I use the AWD-LSTM language model that I already trained. The procedure of the language model is almost the same as <a href="https://saied71.github.io/RohanAiLab/markdown/2021/07/17/Pretraining-Persian-AWD-LSTM-Language-model.html">Pretraining Persian AWD-LSTM Language model</a> except for the data. I used <a href="https://huggingface.co/datasets/oscar">Oscar</a> dataset, and after cleaning, I’ve got around 200k articles (~800 MB). for training, it almost took 15 hours on p3 instance of AWS for 10 epochs. Here are the metrics for the last epoch:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>epoch</th>
+<th>train_loss</th>
+<th>valid_loss</th>
+<th>accuracy</th>
+<th>perplexity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>9</td>
+<td>4.3451</td>
+<td>4.3609</td>
+<td>0.29820</td>
+<td>78.3298</td>
+</tr>
+</tbody>
+</table>
+<p>For fine-tuning, I couldn’t get a standard dataset for benchmarking, so I crawled some news data(around 2700) articles for the sake of demonstration. Maybe in the future, I gathered such a dataset that also can be useful for other tasks. the classes of data are:</p>
+<ul>
+<li>poliitika(politics)</li>
+<li>kultuur(culture)</li>
+<li>majandus(economy)</li>
+</ul>
+<p>Alright, let’s get started.</p>
+<p>First, we download the model, tokenizer, and the data, which we will use to finetune our language model. after this running this cell, a file named <code>ULMFIT_ET.zip</code> will be downloaded, which includes the model, tokenizer, and the data.</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:14463,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147646857,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gdown</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span>  <span class="st">"https://drive.google.com/uc?id=1yWUixE3SpALPtaJjeHdCDIg5bAkhGbz0"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> <span class="st">'ULMFIT_ET.zip'</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>gdown.download(url, output, quiet<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>unzip ULMFIT_ET.<span class="bu">zip</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install <span class="op">-</span>U fastai</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install sentencepiece</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:5137,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147651924,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="34770aed-ece8-4333-b6ad-c0458a24da34" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.text <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.text.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> fastai</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fastai version: </span><span class="sc">{</span>fastai<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU which is used : </span><span class="sc">{</span>torch<span class="sc">.</span>cuda<span class="sc">.</span>get_device_name(<span class="dv">0</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">## parameters for dataloader and tokenizer</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>lang <span class="op">=</span> <span class="st">"et"</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>backwards<span class="op">=</span><span class="va">False</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>bs<span class="op">=</span><span class="dv">128</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>vocab_sz <span class="op">=</span> <span class="dv">30000</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>drop_mult <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>num_workers<span class="op">=</span><span class="dv">18</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">## setting up the pathes</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> Path(<span class="st">"."</span>).absolute()</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"our base directory: </span><span class="sc">{</span>base<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>ulmfit_dir <span class="op">=</span> base <span class="op">/</span> <span class="st">"ULMFIT_ET"</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"our model and data directory: </span><span class="sc">{</span>ulmfit_dir<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>lm_fns <span class="op">=</span> [ulmfit_dir <span class="op">/</span> <span class="ss">f"model_out/</span><span class="sc">{</span>lang<span class="sc">}</span><span class="ss">_ULMFIT"</span>, ulmfit_dir <span class="op">/</span> <span class="ss">f"model_out/</span><span class="sc">{</span>lang<span class="sc">}</span><span class="ss">_ULMFIT_vocab"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>fastai version: 2.4.1
+GPU which is used : Tesla P100-PCIE-16GB
+our base directory: /content
+our model and data directory: /content/ULMFIT_ET</code></pre>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:471,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147652388,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="7c058f95-0499-4fbb-ec7f-4455a5902d40" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(ulmfit_dir <span class="op">/</span> <span class="st">"data_finetune.csv"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"shape of the data: </span><span class="sc">{</span>df<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df.sample(<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>shape of the data: (2735, 2)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">label</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1016</td>
+<td>Majandus- ja taristuministri Taavi Aasa hinnangul on veeteetasude langetamise otsus end õigustanud ning seda tuleks teha ka järgnevatel aastatel.&nbsp;Esmaspäeval toimus riigikogu transiidi ja logistika toetusrühma koosolek, kus räägiti aktsiiside ja veeteede tasude mõjust majandusele, riigieelarvele ja ettevõtluse konkurentsivõimele. Arutelul osalesid lisaks Aasale riigikogu liikmed ning rahandusministeeriumi ja ettevõtjate esindajad.&nbsp;“Tänu veeteetasude vähendamisele on Eesti sadamate kaubamaht kumulatiivselt kasvanud 10 protsenti ning tänu kütuseaktsiiside langetusele on paljud ettevõtted taa...</td>
+<td>majandus</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">721</td>
+<td>Sotsiaalministeerium saatis ministeeriumitele ja partneritele kooskõlastamiseks bioloogiliste ohutegurite määruse muutmise eelnõu. Muudatustega uuendatakse töökeskkonna bioloogiliste ohutegurite ohurühmade loetelu, kuhu lisanduvad uued bioloogilised ohutegurid, näiteks koroonaviirus SARS-CoV-2. Muudatused võimaldavad nõuetekohaselt kaitsta töökohtadel töötajate tervist ja tagada ohutust viiruse leviku ajal.„Bioloogilised ohutegurid võivad põhjustada töötajatel erinevaid haigusi – allergiaid, mürgistusi ja nakkuseid. Seega tuleb töökeskkonnas viia töötajate kokkupuude bioloogiliste ohutegur...</td>
+<td>poliitika</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2344</td>
+<td>„Teater on üks väga lihtne asi. Muud kunsti pole, kui õpid sõnad pähe, ja siis oled näoga rahva poole ja ütled kõva häälega. Ja ajanäitajale pole vaja vaadata. Publiku nägudelt on näha, kui on aeg lõpetada. Ja kui te minuga nõus olete, siis pean ütlema, et teil on hea maitse.” Nii on tänane juubilar, rahvanäitleja Endel Pärn kirjutanud tervitussõnadeks Marvi Taggo raamatule “Endel Pärn. Operetiprofessor” (Faatum 1998).Endel Pärn sündis 21. aprillil 1914 Petrogradis Vassili saarel 4. liinil Aleksander Pärna esimese pojana. Noorema venna nimi oli Ants, ema oli Helene. Endel Pärn on meenutanu...</td>
+<td>kultuur</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1867</td>
+<td>16. augustil kiitis Vabariigi Valitsus heaks Eesti maaelu arengukava 2014–2020 kolmanda muudatuse, millega muu hulgas lisati arengukavva uus riskijuhtimise toetusmeede. Samuti suurendatakse mahepõllumajanduse toetuse eelarvet, põllumajandusliku tootmise potentsiaali taastamise toetuse eelarvet ning suunatakse lisaraha arengukava rahastamisvahendisse.&nbsp;„Riskijuhtimise meede on uus toetusskeem, mis on ette nähtud erinevate põllumajandustootmist mõjutavate riskidega tegelemiseks. On oluline, et põllumehed tegeleksid riskijuhtimisega, mis aitaks leevendada ilmakahjusid ja tagasilööke turgudel,“...</td>
+<td>majandus</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">481</td>
+<td>Stenbocki maja, 15. detsember 2020 – Peaminister Jüri Ratase sõnul kujutab koroonaviiruse levik Eesti inimeste tervisele ning ühiskonna ja majanduse toimimisele jätkuvalt ohtu ning viiruse leviku pidurdamine sõltub igast inimesest, kuid kui kevadel andis meile jõudu lähenev suvi, siis nüüd saame loota saabuvatele vaktsiinidele.Ratas ütles riigikogu ees tehtud poliitilises avalduses, et pea seitse kuud pärast kevadise eriolukorra lõppu oleme suuresti õppinud koroonaviirusega elama. “Kooseluoskust peame me veel mõnda aega arendama ning seda läheb tarvis, kuni saame vaktsiinide, ravimite ning...</td>
+<td>poliitika</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Using pretrained SentencePiece for tokenization. Then create a data loader for feeding the language model learner.</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:26,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147652390,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> SentencePieceTokenizer(lang<span class="op">=</span><span class="st">"et"</span>, max_vocab_sz<span class="op">=</span>vocab_sz, sp_model<span class="op">=</span>ulmfit_dir <span class="op">/</span> <span class="st">"spm/spm.model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:18011,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147670377,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="097e9a1f-12c3-4f81-988c-9f123d48a69b" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dblock_lm <span class="op">=</span> DataBlock(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    blocks<span class="op">=</span>(TextBlock.from_df(<span class="st">'text'</span>, is_lm<span class="op">=</span><span class="va">True</span>, tok<span class="op">=</span>tok,backwards<span class="op">=</span><span class="va">False</span>)),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    get_x<span class="op">=</span>ColReader(<span class="st">'text'</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>dls_lm <span class="op">=</span> dblock_lm.dataloaders(df, bs<span class="op">=</span>bs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/usr/local/lib/python3.7/dist-packages/numpy/core/_asarray.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray
+  return array(a, dtype, copy=False, order=order)</code></pre>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:43,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147670379,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="b740b194-c171-43c9-a627-8d6acb94f859" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dls_lm.show_batch(max_n<span class="op">=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">text_</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>▁xxbos ▁äsja ▁avaldatud ▁xxup ▁oecd ▁haridus statistika ▁kogumik ▁xxmaj ▁edu c ation ▁ at ▁a ▁xxmaj ▁ gla nce ▁2019 ▁toob ▁esile , ▁et ▁xxmaj ▁eestis ▁on ▁võrreldes ▁teiste ▁riikidega ▁rohkem ▁kõrg hari tuid ▁ja ▁kõrgharidus t ▁asub ▁oma ndama ▁üha ▁enam ▁üle ▁25- aastaseid ▁inimesi , ▁samas ▁veniva d ▁paljude ▁tudengite ▁ õpingud ▁pika le ▁või ▁katke vad . haridus - ▁ja ▁teadusminister ▁xxmaj ▁mailis ▁xxmaj ▁reps i ▁sõnul ▁osutab ▁üks</td>
+<td>▁äsja ▁avaldatud ▁xxup ▁oecd ▁haridus statistika ▁kogumik ▁xxmaj ▁edu c ation ▁ at ▁a ▁xxmaj ▁ gla nce ▁2019 ▁toob ▁esile , ▁et ▁xxmaj ▁eestis ▁on ▁võrreldes ▁teiste ▁riikidega ▁rohkem ▁kõrg hari tuid ▁ja ▁kõrgharidus t ▁asub ▁oma ndama ▁üha ▁enam ▁üle ▁25- aastaseid ▁inimesi , ▁samas ▁veniva d ▁paljude ▁tudengite ▁ õpingud ▁pika le ▁või ▁katke vad . haridus - ▁ja ▁teadusminister ▁xxmaj ▁mailis ▁xxmaj ▁reps i ▁sõnul ▁osutab ▁üks ▁olulisemaid</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>▁juhiks ▁xxmaj ▁ e ster ▁xxmaj ▁ tu ik soo ▁ning ▁aseesimees teks ▁põllumajandus ettevõtja ▁xxmaj ▁kristjan ▁xxmaj ▁roos ve ▁ja ▁xxmaj ▁riigikogu ▁maaelu komisjoni ▁liikme ▁xxmaj ▁kaido ▁ höövel soni . e ster ▁xxmaj ▁ tu ik sool ▁on ▁pikaajaline ▁kogemus ▁põllumajanduse ▁valdkonnas . ▁xxmaj ▁aastatel ▁2004 -20 07 ▁oli ▁xxmaj ▁ e ster ▁xxmaj ▁ tu ik soo ▁kahes ▁valitsuse s ▁põllumajandus minister ▁ning ▁ta ▁on ▁kuulunud ▁xxmaj ▁riigikogu ▁xxup</td>
+<td>▁xxmaj ▁ e ster ▁xxmaj ▁ tu ik soo ▁ning ▁aseesimees teks ▁põllumajandus ettevõtja ▁xxmaj ▁kristjan ▁xxmaj ▁roos ve ▁ja ▁xxmaj ▁riigikogu ▁maaelu komisjoni ▁liikme ▁xxmaj ▁kaido ▁ höövel soni . e ster ▁xxmaj ▁ tu ik sool ▁on ▁pikaajaline ▁kogemus ▁põllumajanduse ▁valdkonnas . ▁xxmaj ▁aastatel ▁2004 -20 07 ▁oli ▁xxmaj ▁ e ster ▁xxmaj ▁ tu ik soo ▁kahes ▁valitsuse s ▁põllumajandus minister ▁ning ▁ta ▁on ▁kuulunud ▁xxmaj ▁riigikogu ▁xxup ▁</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>, ▁miks ▁paljud ▁leibkonna d ▁ei ▁sattunud ▁statistilis te ▁vaeste ▁hulka . ma rek ▁xxmaj ▁jürgenson : ▁xxmaj ▁noored ▁vajavad ▁tuge kuri tegevuse ▁enne tamine ▁ja ▁ ohje lda mine ▁on ▁ühiskonnale ▁suurimaks ▁väljakutse ks ▁kõikjal ▁maailmas . ▁xxmaj ▁erandiks ▁pole ▁ka ▁xxmaj ▁eesti . ▁xxmaj ▁taas ise seis vuse ▁aastate ▁jooksul ▁on ▁kuritegevuse ▁ xxunk ▁ja ▁raskus kese ▁märgatavalt ▁muutunud ▁ning ▁üheksa kümne ndate ▁ma ffi a riigi st ▁saanud ▁maailma</td>
+<td>▁miks ▁paljud ▁leibkonna d ▁ei ▁sattunud ▁statistilis te ▁vaeste ▁hulka . ma rek ▁xxmaj ▁jürgenson : ▁xxmaj ▁noored ▁vajavad ▁tuge kuri tegevuse ▁enne tamine ▁ja ▁ ohje lda mine ▁on ▁ühiskonnale ▁suurimaks ▁väljakutse ks ▁kõikjal ▁maailmas . ▁xxmaj ▁erandiks ▁pole ▁ka ▁xxmaj ▁eesti . ▁xxmaj ▁taas ise seis vuse ▁aastate ▁jooksul ▁on ▁kuritegevuse ▁ xxunk ▁ja ▁raskus kese ▁märgatavalt ▁muutunud ▁ning ▁üheksa kümne ndate ▁ma ffi a riigi st ▁saanud ▁maailma ▁mõistes</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>▁nõus taks ▁praeguses ▁kriisi s ▁valitsus t ▁majanduse ▁elavda mise , ▁inimeste ▁toimetuleku ▁parandamise ▁ning ▁ettevõtete ▁ konkurentsivõime ▁kasvatamise ▁küsimustes . „ eesti ▁ja ▁terve ▁maailma ▁majandus ▁on ▁kor oon ap and eemia st ▁tingituna ▁kandnud ▁suuri ▁kahju sid ▁ning ▁seetõttu ▁nõuab ▁majanduse ▁toetamine , ▁inimeste ▁toimetuleku ▁parandamine ▁ja ▁ettevõtete ▁ konkurentsivõime ▁soodusta mine ▁valitsuse lt ▁suurt ▁tähelepanu . ▁xxmaj ▁praegu ▁koos tatava ▁laia põhja lise ▁majanduse ▁elavda mise ▁kava ▁loomiseks ▁peame</td>
+<td>taks ▁praeguses ▁kriisi s ▁valitsus t ▁majanduse ▁elavda mise , ▁inimeste ▁toimetuleku ▁parandamise ▁ning ▁ettevõtete ▁ konkurentsivõime ▁kasvatamise ▁küsimustes . „ eesti ▁ja ▁terve ▁maailma ▁majandus ▁on ▁kor oon ap and eemia st ▁tingituna ▁kandnud ▁suuri ▁kahju sid ▁ning ▁seetõttu ▁nõuab ▁majanduse ▁toetamine , ▁inimeste ▁toimetuleku ▁parandamine ▁ja ▁ettevõtete ▁ konkurentsivõime ▁soodusta mine ▁valitsuse lt ▁suurt ▁tähelepanu . ▁xxmaj ▁praegu ▁koos tatava ▁laia põhja lise ▁majanduse ▁elavda mise ▁kava ▁loomiseks ▁peame ▁kasutama</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:1000,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147671345,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> language_model_learner(dls_lm, AWD_LSTM, drop_mult<span class="op">=</span>drop_mult, pretrained<span class="op">=</span><span class="va">True</span>, pretrained_fnames<span class="op">=</span>lm_fns, </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                               metrics<span class="op">=</span>[accuracy, Perplexity()]).to_fp16()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Using learning rate finder of fastai. Here we plot the loss versus the learning rates. We’re interested in finding a good order of magnitude of the learning rate, so we plot with a log scale. Then, we choose a value that is approximately in the middle of the sharpest downward slope.</p>
+<p>For more information on the finding the good learning rate you can refer to this post: <a href="https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html">how do you find a good learning rate</a></p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:36572,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627137931894,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="7a836196-63af-4390-946c-4234dc34d429">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>learn.lr_find()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>SuggestedLRs(valley=0.001737800776027143)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="2021-8-24-ULMFIT-ET_files/figure-html/cell-9-output-3.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Next, we finetune the model. By default, a pretrained Learner is in a frozen state, meaning that only the head of the model will train while the body stays frozen.</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:85504,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627147756844,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="80429d0c-fef1-4b7e-ceaf-be3193d3f6cb" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">2e-3</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">perplexity</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>4.556601</td>
+<td>4.277527</td>
+<td>0.302157</td>
+<td>72.062035</td>
+<td>01:25</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We can them fine-tune the model after unfreezing</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:657865,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148414696,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="b21420ab-a45e-4234-d10d-375a0d010f7f" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">7</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">perplexity</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>4.398276</td>
+<td>4.382681</td>
+<td>0.291182</td>
+<td>80.052361</td>
+<td>01:33</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>4.348745</td>
+<td>4.372172</td>
+<td>0.290859</td>
+<td>79.215492</td>
+<td>01:33</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>4.134252</td>
+<td>4.311713</td>
+<td>0.297216</td>
+<td>74.568130</td>
+<td>01:34</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>3.871403</td>
+<td>4.266633</td>
+<td>0.305090</td>
+<td>71.281227</td>
+<td>01:33</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>3.658735</td>
+<td>4.233648</td>
+<td>0.309295</td>
+<td>68.968391</td>
+<td>01:34</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>3.459976</td>
+<td>4.217117</td>
+<td>0.312481</td>
+<td>67.837646</td>
+<td>01:34</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>3.357300</td>
+<td>4.217448</td>
+<td>0.312503</td>
+<td>67.860069</td>
+<td>01:34</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:737,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148415422,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="061fcd7d-06d8-4dbd-b54f-c1d956dff3d8" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>learn.recorder.plot_loss()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="2021-8-24-ULMFIT-ET_files/figure-html/cell-12-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>According to this plot, we have some overfitting. Obviously, we need more data to finetune our language model. another thing to mention is the valid loss and train loss which have notable differences, and here is an interesting experience that I borrowed from Jeremy Howards in this <a href="https://forums.fast.ai/t/determining-when-you-are-overfitting-underfitting-or-just-right/7732/4">thread</a> , and I quote:</p>
+<p><code>Funnily enough, some over-fitting is nearly always a good thing. All that matters in the end is: is the validation loss as low as you can get it (and/or the val accuracy as high)? This often occurs when the training loss is quite a bit lower.</code></p>
+<p>so it’s a good idea to train and see when the valid loss starts to grow; that will be our threshold for training. Though this is not the best idea but when we can’t get more data, we can make some compromises as we did here. Another option is data augmentation; that may be in the future; I will jump in that and make some experience and share it with you guys.</p>
+<p>Once it’s done, we save all of our model except the final layer that converts activations to probabilities of picking each token in our vocabulary. The model not including the final layer is called the encoder. We can save it with <code>save_encoder</code></p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:414,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148439468,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>learn.save_encoder(ulmfit_dir <span class="op">/</span> <span class="st">'finetuned'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here we gather our data for text classification almost exactly like before:</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:13996,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148459690,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="d77181d4-4df3-40b5-fa8d-39c16d3d88f3" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>dblocks_clas <span class="op">=</span> DataBlock(blocks<span class="op">=</span>(TextBlock.from_df(<span class="st">'text'</span>, tok<span class="op">=</span>tok, vocab<span class="op">=</span>dls_lm.vocab, backwards<span class="op">=</span>backwards), CategoryBlock),</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                    get_x<span class="op">=</span>ColReader(<span class="st">'text'</span>),</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                    get_y<span class="op">=</span>ColReader(<span class="st">'label'</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>dls_clas <span class="op">=</span> lr <span class="op">=</span> dblocks_clas.dataloaders(df, bs<span class="op">=</span>bs, num_workers<span class="op">=</span>num_workers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/usr/local/lib/python3.7/dist-packages/numpy/core/_asarray.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray
+  return array(a, dtype, copy=False, order=order)</code></pre>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:650,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148460326,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="71590700-d245-4cb6-869f-eb66a8388e60" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>dls_clas.show_batch(max_n<span class="op">=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">category</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>▁xxbos ▁xxmaj ▁andres ▁kol liste de ne miseks ▁on ▁tarvis ▁kahte ▁lihtsat ▁asja : ▁inimesi ▁ja ▁energiat . ▁xxmaj ▁see ▁kehtib ▁üksikisiku , ▁perekonna , ▁kogukonna , ▁linna ▁kohta . ▁xxmaj ▁ka ▁riik , ▁maailma ▁riigid , ▁kogu ▁inimkond ▁edene b ▁siis , ▁kui ▁on ▁inimesi ▁ja ▁on ▁energiat . ▁xxmaj ▁inimesi ▁peab ▁olema ▁parasjagu ▁ja ▁neil ▁peab ▁minema ▁hästi . ▁xxmaj ▁energia ▁peab ▁olema ▁kättesaadav ▁kogu ▁aeg , ▁võimalikult ▁väheste ▁ tõrge tega . ▁xxmaj ▁energia ▁eest ▁maksta v ▁hind ▁peab ▁olema ▁mõistlik . ▁xxmaj ▁inimeste ▁kõht ▁peab ▁olema ▁täis . elu ▁xxmaj ▁maal ▁ei ▁saa ▁eksisteeri da ▁energia ta , ▁võime ta ▁energiat ▁kasutada , ▁seda ▁muu ndada . ▁xxmaj ▁energiat ▁kasutab ▁oma ▁elu tegevuse ks ▁viirus ▁( või ▁peaksime ▁tema ▁puhul ▁ütlema , ▁lihtsalt ▁tegevuseks ) , ▁kõige ▁väiksem ▁ bakter , ▁iga ▁taim , ▁iga ▁loom . ▁xxmaj ▁energia ta ▁ei ▁hüppa ▁ konna poeg ki</td>
+<td>majandus</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>▁xxbos ▁xxmaj ▁kallid ▁erakonna kaaslased ! ▁xxmaj ▁austa tud ▁külalised ! ▁xxmaj ▁auväärse d ▁ajakirjanikud ! ▁xxmaj ▁lugupeetud ▁siin viibija d ! sel ▁neljapäeval ▁tähista sime ▁pidulikult ▁oma ▁armsa ▁xxmaj ▁eesti ▁xxmaj ▁vabariigi ▁iseseisvuse ▁taastamise ▁29. ▁aastapäeva . ▁xxmaj ▁homme ▁saame ▁samas ▁märkida ▁ära ▁väga ▁olulise ▁sündmuse ▁meie ▁taas ▁vabaks ▁saamise ▁rajal , ▁kui ▁möödub ▁31 ▁aastat ▁xxmaj ▁balti ▁keti st . ▁xxmaj ▁toonase st ▁ meelsuse st , ▁vabadus i ha st ▁ja ▁xxmaj ▁eesti ▁hinge laadi st ▁sündis ▁ka ▁xxmaj ▁rahva rin ne , ▁millest ▁sai ▁omakorda ▁alguse ▁xxmaj ▁eesti ▁xxmaj ▁keskerakonna ▁sünd ▁ja ▁asu tamine . ▁xxmaj ▁täna ▁oleme ▁seda ▁teed ▁meeles ▁kandes ▁kogunenud ▁xxmaj ▁keskerakonna ▁18. ▁kongressi le . rahva rinde ▁üld programmi ▁ja ▁har ta sse ▁sai ▁toona ▁kirja ▁mitmeid ▁olulisi ▁põhimõtteid , ▁mis ▁väljenda sid ▁meie ▁rahva ▁siiras t ▁soovi ▁ise ▁oma ▁asju ▁otsustada ▁ja ▁tulevikku ▁seada . ▁xxmaj ▁paljud ▁neist ▁ideede st ▁on</td>
+<td>poliitika</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>▁xxbos ▁ühed ▁ rikkad ▁ja ▁kasu tud , ▁kes ▁ himu stavad ▁alati ▁rohkem at ; teist el ▁pole ▁aga ▁midagi ▁ja ▁nad ▁elavad ▁puuduse s , ▁ohtlikud , ▁tunde s ▁liig ▁suurt ▁kadedus t ▁ja ▁läkita vad ▁omanike ▁poole ▁ ti ge da id ▁ nool i . ( e uri pi des ▁„ palu jan na d “ ) ▁xxup ▁karl ▁xxup ▁ lust , ▁ vaatleja parem poolse d ▁ei ▁varja , ▁et ▁jääme ▁tulevikus ▁vähemus rahvus eks ▁omal ▁maal . ▁xxmaj ▁ilma ▁pensioni ta , ▁ilma ▁tasuta ▁hariduse ▁ja ▁arstiabi ta . ▁xxmaj ▁siis ▁kaovad ▁ka ▁demokraatia ▁ja ▁vabadus . ▁xxmaj ▁poliitika ▁ilma ▁filosoofia t ▁tundma ta ▁on ▁pime . ▁xxmaj ▁selgust ▁võiks ▁saada ▁vana - kreeka ▁pärandi ▁ja ▁klassiku te ▁tund misest , ▁sest ▁mustrid ▁korduva d . or ja pidamine ▁jättis ▁kree k lastele ▁rohkelt ▁jõud e aega ▁( kr ▁sch ol é ;</td>
+<td>kultuur</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>▁xxbos ▁xxmaj ▁vinni ▁näidis s ov hoos tehniku m need sama d ▁karda ani d ▁viisid ▁ voliniku ▁xxmaj ▁vinni ▁so v hoos i . ▁xxmaj ▁auto spordi võistlustel ▁xxmaj ▁al u vere ▁auto kross i rajal ▁sai ▁ta ▁tuttavaks ▁xxmaj ▁vinni ▁maja ndi ▁pea insener ▁xxmaj ▁aivo ▁xxmaj ▁al es tega . ▁xxmaj ▁sama ▁mure ▁maja ndi s ▁– ▁suur ▁puudus ▁karda ani dest . ▁xxmaj ▁tuli ▁siis ▁ volinik ▁neile ▁külla , ▁autos ▁ka st ▁karda ane ▁ja ▁risti d ▁peale kauba . ▁xxmaj ▁see ▁avaldas ▁muljet ▁ja ▁xxmaj ▁a le ste ▁jooksis ▁boss ile ▁ette ▁kandma . ▁xxmaj ▁kuna ▁xxmaj ▁vinni ▁maja ndi s ▁õhtu pool ikud ▁möödus id ▁ikka ▁külaliste ga ▁korraliku s ▁lõuna laua s , ▁kutsuti ▁uus ▁mees ▁ennast ▁näitama . direktor ▁xxmaj ▁heino ▁xxmaj ▁kallaste ▁pakkus ▁välja ▁idee ▁minna ▁xxmaj ▁saaremaa ▁kolhoosi ▁ja ▁võtta ▁töö raamatu sse ▁üle viimine ▁nende ▁maja ndi sse</td>
+<td>kultuur</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The main difference is that we have to use the exact same vocabulary as when we were fine-tuning our language model, or the weights learned won’t make any sense. We pass that vocabulary with <code>vocab</code>.</p>
+<p>Then we can define our text classifier like before:</p>
+<p>Defing metrics: we use <a href="https://docs.fast.ai/metrics.html#accuracy">accuracy</a> and <a href="https://docs.fast.ai/metrics.html#F1Score">F1Score</a></p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:678,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148460992,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>metrics<span class="op">=</span>[accuracy,F1Score(average<span class="op">=</span><span class="st">"macro"</span>)]</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> text_classifier_learner(dls_clas, AWD_LSTM, drop_mult<span class="op">=</span><span class="dv">1</span>, pretrained<span class="op">=</span><span class="va">False</span>, </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                               metrics<span class="op">=</span>metrics).to_fp16()</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> learn.load_encoder(ulmfit_dir <span class="op">/</span> <span class="st">'finetuned'</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>learn.freeze()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:96249,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148557237,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="abd4860c-84ca-4102-cac1-73db6a922569" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>learn.lr_find()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display" data-execution_count="15">
+<pre><code>SuggestedLRs(valley=0.0030199517495930195)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="2021-8-24-ULMFIT-ET_files/figure-html/cell-17-output-3.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:23234,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148653126,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="96b4d81c-2486-4c47-bd75-0d24a64c1b74" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">3e-3</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.823605</td>
+<td>0.730970</td>
+<td>0.793419</td>
+<td>0.793850</td>
+<td>00:21</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The last step is to train with discriminative learning rates and gradual unfreezing. In computer vision, we often unfreeze the model all at once, but for NLP classifiers, we find that unfreezing a few layers at a time makes a real difference.</p>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:24505,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148689051,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="31519562-8454-46df-fbe1-31b14e6fea14" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>learn.freeze_to(<span class="op">-</span><span class="dv">2</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, <span class="bu">slice</span>(lr<span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.657104</td>
+<td>0.534918</td>
+<td>0.800731</td>
+<td>0.803395</td>
+<td>00:24</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:32676,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148725348,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="f35d5afe-2032-4116-bc33-e33e40a71bfa" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>learn.freeze_to(<span class="op">-</span><span class="dv">3</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, <span class="bu">slice</span>(lr<span class="op">/</span><span class="dv">2</span><span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr<span class="op">/</span><span class="dv">2</span>), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.591867</td>
+<td>0.450366</td>
+<td>0.833638</td>
+<td>0.837132</td>
+<td>00:32</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-executioninfo="{&quot;elapsed&quot;:79297,&quot;status&quot;:&quot;ok&quot;,&quot;timestamp&quot;:1627148820685,&quot;user&quot;:{&quot;displayName&quot;:&quot;Ali Farid&quot;,&quot;photoUrl&quot;:&quot;https://lh3.googleusercontent.com/a-/AOh14Gg3Z6YV0-2TkYch5LSCn-o-LLgml064QtEiE1mr=s64&quot;,&quot;userId&quot;:&quot;12633910519416978942&quot;},&quot;user_tz&quot;:-270}" data-outputid="ef746396-77a8-43aa-fb61-b06099baaca2" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">2</span>, <span class="bu">slice</span>(lr<span class="op">/</span><span class="dv">10</span><span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr<span class="op">/</span><span class="dv">10</span>), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.554562</td>
+<td>0.423918</td>
+<td>0.839122</td>
+<td>0.842716</td>
+<td>00:39</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>0.549532</td>
+<td>0.412864</td>
+<td>0.839122</td>
+<td>0.842382</td>
+<td>00:38</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We still get good results, given that our dataset size for fine-tuning was small.maybe others contribute to this project to make it even better.</p>
+<p>You can check out ULMFIT in other languages in this repo: <a href="https://github.com/floleuerer/fastai_ulmfit">fastai_ulmfit</a>, which is an excellent work of Florian.</p>
+<p>Here are other useful links :</p>
+<ul>
+<li><a href="https://docs.fast.ai/tutorial.text.html#The-ULMFiT-approach">Transfer learning in text</a></li>
+<li><a href="https://docs.fast.ai/tutorial.transformers.html">Transformers with fastai</a></li>
+<li><a href="https://github.com/morganmcg1/fasthugs">fasthugs</a></li>
+</ul>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

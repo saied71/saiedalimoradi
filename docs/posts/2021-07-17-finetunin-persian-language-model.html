@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2021-07-17">
+<meta name="description" content="This notebook contains codes for finetunning AWD-LSTM language model Using ULMFIT Approach for sentiment analysis in Persian Language">
+
+<title>letheAI - Persian ULMFIT</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">letheAI</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com" rel="" target=""><i class="bi bi-twitter" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Persian ULMFIT</h1>
+                  <div>
+        <div class="description">
+          This notebook contains codes for finetunning AWD-LSTM language model Using ULMFIT Approach for sentiment analysis in Persian Language
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">July 17, 2021</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<p>Following the previous post:<a href="https://saied71.github.io/RohanAiLab/markdown/2021/07/17/Pretraining-Persian-AWD-LSTM-Language-model.html">pretraining Persian AWD LSTM language model</a>. Here we finetune our language model that was trained on Persian corpus for sentiment analysis. I use the ULMFIT approach introduced by Jeremy Howard, Sebastian Ruder and implemented it nicely in the fastai library. for more information about ULMFIT ,and the ideas behind it, you can refer o this post: <a href="https://nlp.fast.ai/classification/2018/05/15/introducing-ulmfit.html">Introducing state of the art text classification with universal language models</a></p>
+<p>First, we download the model, tokenizer, and the data, which we will use to finetune our language model. after this running this cell, a file named <code>ULMFIT_FA.zip</code> will be downloaded, which includes the model, tokenizer, and the data.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gdown</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span>  <span class="st">"https://drive.google.com/uc?id=1-VftZs-XxQD6KvmeNT8Io03MU1mQKylO"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> <span class="st">'ULMFIT_FA.zip'</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>gdown.download(url, output, quiet<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>unzip ULMFIT_FA.<span class="bu">zip</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install <span class="op">-</span>U fastai</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install sentencepiece</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-outputid="f13f1fea-3924-48ec-8530-b70e55780c8e" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.text <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastai.text.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> fastai</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fastai version: </span><span class="sc">{</span>fastai<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU which is used : </span><span class="sc">{</span>torch<span class="sc">.</span>cuda<span class="sc">.</span>get_device_name(<span class="dv">0</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">## parameters for dataloader and tokenizer</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>lang <span class="op">=</span> <span class="st">"fa"</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>backwards<span class="op">=</span><span class="va">False</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>bs<span class="op">=</span><span class="dv">128</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>vocab_sz <span class="op">=</span> <span class="dv">30000</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>drop_mult <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>num_workers<span class="op">=</span><span class="dv">18</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">## setting up the pathes</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> Path(<span class="st">"."</span>).absolute()</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"our base directory: </span><span class="sc">{</span>base<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>ulmfit_dir <span class="op">=</span> base <span class="op">/</span> <span class="st">"ULMFIT_FA"</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"our model and data directory: </span><span class="sc">{</span>ulmfit_dir<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>lm_fns <span class="op">=</span> [ulmfit_dir <span class="op">/</span> <span class="ss">f"model_out/</span><span class="sc">{</span>lang<span class="sc">}</span><span class="ss">_ULMFIT"</span>, ulmfit_dir <span class="op">/</span> <span class="ss">f"model_out/</span><span class="sc">{</span>lang<span class="sc">}</span><span class="ss">_ULMFIT_vocab"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>fastai version: 2.4.1
+GPU which is used : Tesla P100-PCIE-16GB
+our base directory: /content
+our model and data directory: /content/ULMFIT_FA</code></pre>
+</div>
+</div>
+<p>This is a preview of the data. I choose Snappfood comment data and going to use it for sentiment analysis of the comments.</p>
+<div class="cell" data-outputid="6f6ee6a5-9f75-408f-d9ba-4dbd27527cb6" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(ulmfit_dir <span class="op">/</span> <span class="st">"snapp.csv"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"shape of the data: </span><span class="sc">{</span>df<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df.sample(<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>shape of the data: (60211, 2)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">comment</th>
+<th data-quarto-table-cell-role="th">label_id</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">51993</td>
+<td>غذا سرد شده و بهم ریخته شده بود برنج‌ها خمیر و قابل خوردن نبود . مخلفات همگی بهم ریخته و نامنظم شده بود و اصلا قیافه خوبی ن داشت سبزی ریحون پخته شده بود .</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4507</td>
+<td>متاسفانه بجای شمع 3 عدد 2 ارسال شده بود</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">25114</td>
+<td>واقعا کارتون بیسته دقیق و سریع خدا برکت بده</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">25560</td>
+<td>در حدی سرد شده بود ک قابل خوردن نبود</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">59813</td>
+<td>کتف مرغ رو اینقدر پودر سوخاری زدن که شده اندازه ران . اونوقت یه تکه هم حسابش کردن . همه چیز گرون شده شما هم گرون کن نه اینکه از سر و ته کار بزنی .</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>leading pretrained SentencePiece for tokenization. Then create a data loader for feeding the language model learner.</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> SentencePieceTokenizer(lang<span class="op">=</span><span class="st">"fa"</span>, max_vocab_sz<span class="op">=</span>vocab_sz, sp_model<span class="op">=</span>ulmfit_dir <span class="op">/</span> <span class="st">"spm/spm.model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-outputid="b73812ca-625c-42b3-ff06-569c7f99b6b0" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dblock_lm <span class="op">=</span> DataBlock(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    blocks<span class="op">=</span>(TextBlock.from_df(<span class="st">'comment'</span>, is_lm<span class="op">=</span><span class="va">True</span>, tok<span class="op">=</span>tok,backwards<span class="op">=</span><span class="va">False</span>)),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    get_x<span class="op">=</span>ColReader(<span class="st">'text'</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>dls_lm <span class="op">=</span> dblock_lm.dataloaders(df, bs<span class="op">=</span>bs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/usr/local/lib/python3.7/dist-packages/numpy/core/_asarray.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray
+  return array(a, dtype, copy=False, order=order)</code></pre>
+</div>
+</div>
+<div class="cell" data-outputid="2493c5b7-fb7e-4da8-e8bd-547230bb2b37" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dls_lm.show_batch(max_n<span class="op">=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">text_</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>▁xxbos ▁خیلی ▁تاخیر ▁داشت ▁رسوند ن ▁غذا ▁غذا ▁ها ▁کاملا ▁سرد ▁شده ▁بود ▁و ▁نون ▁ها ▁خمیر ▁xxbos ▁وقتی ▁کیک ▁رسید ▁دستم ▁له ▁له ▁شده ▁شده ▁بود ▁و ▁کاملا ▁از ▁بین ▁رفته ▁بود ▁xxbos ▁خمیر ▁پای ▁سیب ▁ مونده ▁بود ▁. ▁شیرینی ش ▁زیاد ▁بود ▁. ▁مزه ▁شو ▁دوست ▁نداشتم ▁xxbos ▁پیک ▁بسیار ▁مودب ▁و ▁سریع ▁بودن ▁تا ▁پشت ▁در ▁واحد ▁اومدن ▁بالا ▁و ▁تحویل ▁دادن ▁. ▁xxbos ▁بد ▁بود ▁غذاها ▁افتضاح</td>
+<td>▁خیلی ▁تاخیر ▁داشت ▁رسوند ن ▁غذا ▁غذا ▁ها ▁کاملا ▁سرد ▁شده ▁بود ▁و ▁نون ▁ها ▁خمیر ▁xxbos ▁وقتی ▁کیک ▁رسید ▁دستم ▁له ▁له ▁شده ▁شده ▁بود ▁و ▁کاملا ▁از ▁بین ▁رفته ▁بود ▁xxbos ▁خمیر ▁پای ▁سیب ▁ مونده ▁بود ▁. ▁شیرینی ش ▁زیاد ▁بود ▁. ▁مزه ▁شو ▁دوست ▁نداشتم ▁xxbos ▁پیک ▁بسیار ▁مودب ▁و ▁سریع ▁بودن ▁تا ▁پشت ▁در ▁واحد ▁اومدن ▁بالا ▁و ▁تحویل ▁دادن ▁. ▁xxbos ▁بد ▁بود ▁غذاها ▁افتضاح ▁تر</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>▁بود ▁خیلی ▁بهتر ▁میشد ▁. ▁xxbos ▁سالاد ▁سزار ▁بدون ▁سس ▁سزار ▁! ▁؟ ▁نمی دونم ▁فراموش ▁کرده ▁بودن ▁بفرست ن ▁یا ▁همیشه ▁همین ه ▁. ▁xxbos ▁باس پاس ▁از ▁کیفیت ▁خوب ▁غذاها ▁، ▁لطفا ▁به ▁منظور ▁صرفه ▁جویی ▁در ▁مصرف ▁کاغذ ▁، ▁منوی ▁کاغذی ▁همراه ▁غذا ▁ارسال ▁نفر ما ی ید ▁. ▁xxbos ▁شیر کا کایو ▁ارسالی ▁فردا ▁من قضی ▁میشود ▁و ▁طعم ▁بدی ▁دارد ▁xxbos ▁پیتزا ▁بیکن ▁فوق ▁الع اد س</td>
+<td>▁خیلی ▁بهتر ▁میشد ▁. ▁xxbos ▁سالاد ▁سزار ▁بدون ▁سس ▁سزار ▁! ▁؟ ▁نمی دونم ▁فراموش ▁کرده ▁بودن ▁بفرست ن ▁یا ▁همیشه ▁همین ه ▁. ▁xxbos ▁باس پاس ▁از ▁کیفیت ▁خوب ▁غذاها ▁، ▁لطفا ▁به ▁منظور ▁صرفه ▁جویی ▁در ▁مصرف ▁کاغذ ▁، ▁منوی ▁کاغذی ▁همراه ▁غذا ▁ارسال ▁نفر ما ی ید ▁. ▁xxbos ▁شیر کا کایو ▁ارسالی ▁فردا ▁من قضی ▁میشود ▁و ▁طعم ▁بدی ▁دارد ▁xxbos ▁پیتزا ▁بیکن ▁فوق ▁الع اد س ▁ولی</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>▁. ▁فقط ▁خلال ▁بادام ▁را ▁فراموش ▁کردند ▁xxbos ▁من ▁چندین ▁بار ▁از ▁این ▁نانوایی ▁خرید ▁کردم ▁و ▁همیشه ▁عالی ▁بوده ▁ولی ▁متاسفانه ▁امروز ▁بسی از ▁خمیر ▁بود ▁و ▁اصلا ▁قابل ▁استفاده ▁نبود ▁xxbos ▁متوسط ▁خوب ▁بود ▁، ▁ما ▁دو ▁نفری ▁غذا ▁رو ▁خورد یم ▁تازه ▁زیاد ▁هم ▁اومد ▁، ▁مرسی ▁xxbos ▁فاصله ▁ما ▁خیلی ▁کم ه ▁ولی ▁پول ▁پیک ▁؟ ▁مالیات ▁؟ ▁xxbos ▁متاسف م ▁براتون ▁توی ▁توضیحات ▁نوشت ید ▁جوجه ▁کباب</td>
+<td>▁فقط ▁خلال ▁بادام ▁را ▁فراموش ▁کردند ▁xxbos ▁من ▁چندین ▁بار ▁از ▁این ▁نانوایی ▁خرید ▁کردم ▁و ▁همیشه ▁عالی ▁بوده ▁ولی ▁متاسفانه ▁امروز ▁بسی از ▁خمیر ▁بود ▁و ▁اصلا ▁قابل ▁استفاده ▁نبود ▁xxbos ▁متوسط ▁خوب ▁بود ▁، ▁ما ▁دو ▁نفری ▁غذا ▁رو ▁خورد یم ▁تازه ▁زیاد ▁هم ▁اومد ▁، ▁مرسی ▁xxbos ▁فاصله ▁ما ▁خیلی ▁کم ه ▁ولی ▁پول ▁پیک ▁؟ ▁مالیات ▁؟ ▁xxbos ▁متاسف م ▁براتون ▁توی ▁توضیحات ▁نوشت ید ▁جوجه ▁کباب ▁800</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>ه ▁فقط ▁یه ▁مقدار ▁خیلی ▁خیلی ▁کم ▁روش ▁گردو ▁خورد ▁شده ▁ریخته ▁خیلی ▁بیخود ▁بود ▁نسبت ▁به ▁پولی ▁که ▁گرفتن ▁همین ▁سالاد ▁و ▁به ▁اسم ▁سالاد ▁فصل ▁همه ▁جا ▁داره ▁20 ▁تومن ▁میده ▁xxbos ▁عالی ▁بود ▁واقعا ▁. ▁من ▁جایی ▁دیگه ▁پیتزا ▁چان و ▁خوردم ▁ولی ▁پیتزا ی ▁شما ▁باعث ▁شد ▁بفهمم ▁قبلی ا ▁پیتزا ▁نبودن ▁که ▁خوردم ▁. ▁واقعا ▁عالی ▁بود ▁ممنون ▁از ▁شما ▁xxbos ▁آقا ▁ما ▁ساعت ▁10 ▁شب ▁گ</td>
+<td>▁فقط ▁یه ▁مقدار ▁خیلی ▁خیلی ▁کم ▁روش ▁گردو ▁خورد ▁شده ▁ریخته ▁خیلی ▁بیخود ▁بود ▁نسبت ▁به ▁پولی ▁که ▁گرفتن ▁همین ▁سالاد ▁و ▁به ▁اسم ▁سالاد ▁فصل ▁همه ▁جا ▁داره ▁20 ▁تومن ▁میده ▁xxbos ▁عالی ▁بود ▁واقعا ▁. ▁من ▁جایی ▁دیگه ▁پیتزا ▁چان و ▁خوردم ▁ولی ▁پیتزا ی ▁شما ▁باعث ▁شد ▁بفهمم ▁قبلی ا ▁پیتزا ▁نبودن ▁که ▁خوردم ▁. ▁واقعا ▁عالی ▁بود ▁ممنون ▁از ▁شما ▁xxbos ▁آقا ▁ما ▁ساعت ▁10 ▁شب ▁گ شن</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> language_model_learner(dls_lm, AWD_LSTM, drop_mult<span class="op">=</span>drop_mult, pretrained<span class="op">=</span><span class="va">True</span>, pretrained_fnames<span class="op">=</span>lm_fns, </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                               metrics<span class="op">=</span>[accuracy, Perplexity()]).to_fp16()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Using learning rate finder of fastai. Here we plot the loss versus the learning rates. We’re interested in finding a good order of magnitude of the learning rate, so we plot with a log scale. Then, we choose a value that is approximately in the middle of the sharpest downward slope.</p>
+<p>For more information on the finding the good learning rate you can refer to this post: <a href="https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html">how do you find a good learning rate</a></p>
+<div class="cell" data-outputid="539e0c84-023d-498f-9e78-6b31b23be5b2">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>learn.lr_find()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>SuggestedLRs(valley=0.0005754399462603033)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="2021-07-17-Finetunin-Persian-Language-Model_files/figure-html/cell-9-output-3.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Next, we finetune the model. By default, a pretrained Learner is in a frozen state, meaning that only the head of the model will train while the body stays frozen.</p>
+<div class="cell" data-outputid="f7efbee0-306f-4b7b-ea5d-695ed80dff39" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1e-3</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>lr <span class="op">*=</span> bs<span class="op">/</span><span class="dv">48</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">perplexity</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>4.431968</td>
+<td>4.142324</td>
+<td>0.249683</td>
+<td>62.948944</td>
+<td>01:39</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We can them fine-tune the model after unfreezing</p>
+<div class="cell" data-outputid="1b6d6897-ec1f-4650-b87e-6351eb94dfa1" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">6</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">perplexity</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>4.061007</td>
+<td>3.951483</td>
+<td>0.270287</td>
+<td>52.012421</td>
+<td>01:46</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>3.865995</td>
+<td>3.788972</td>
+<td>0.287438</td>
+<td>44.210945</td>
+<td>01:47</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>3.646721</td>
+<td>3.685658</td>
+<td>0.299375</td>
+<td>39.871330</td>
+<td>01:47</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>3.451701</td>
+<td>3.635723</td>
+<td>0.305642</td>
+<td>37.929253</td>
+<td>01:47</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>3.253018</td>
+<td>3.620441</td>
+<td>0.308691</td>
+<td>37.354046</td>
+<td>01:46</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>3.116226</td>
+<td>3.625103</td>
+<td>0.309143</td>
+<td>37.528580</td>
+<td>01:46</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Once this is done, we save all of our model except the final layer that converts activations to probabilities of picking each token in our vocabulary. The model not including the final layer is called the encoder. We can save it with <code>save_encoder</code></p>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>learn.save_encoder(ulmfit_dir <span class="op">/</span> <span class="st">'finetuned'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here we gather our data for text classification almost exactly like before:</p>
+<div class="cell" data-outputid="105e25a0-c7f7-4455-ad17-47818ffcfa0c" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dblocks_clas <span class="op">=</span> DataBlock(blocks<span class="op">=</span>(TextBlock.from_df(<span class="st">'comment'</span>, tok<span class="op">=</span>tok, vocab<span class="op">=</span>dls_lm.vocab, backwards<span class="op">=</span>backwards), CategoryBlock),</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                    get_x<span class="op">=</span>ColReader(<span class="st">'text'</span>),</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                    get_y<span class="op">=</span>ColReader(<span class="st">'label_id'</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>dls_clas <span class="op">=</span> dblocks_clas.dataloaders(df, bs<span class="op">=</span>bs, num_workers<span class="op">=</span>num_workers)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/usr/local/lib/python3.7/dist-packages/numpy/core/_asarray.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray
+  return array(a, dtype, copy=False, order=order)</code></pre>
+</div>
+</div>
+<div class="cell" data-outputid="da2518f7-84b9-4f48-c94f-5a9face286b5">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dls_clas.show_batch(max_n<span class="op">=</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">text</th>
+<th data-quarto-table-cell-role="th">category</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>▁xxbos ▁اسنپ ▁مثل ▁همیشه ▁عالی ▁این ▁همه ▁راه ▁رو ▁سریع ▁اومد ▁داغ ▁اورد ▁ولی ▁واقعا ▁از ▁رستوران ▁ایتالیایی ▁مثل ▁شما ▁بعید ه ▁ع ذا تون ▁طعم ▁خوبی ▁نده . ▁قیمت ▁رو ▁شده ▁بالا ▁ببر ین ▁ولی ▁غذا ▁رو ▁خوش ▁طعم ▁درست ▁کنید ▁و ▁باور ▁کنید ▁اگه ▁غذا ▁رو ▁با ▁کیفیت ▁خوب ▁درست ▁کنید ▁باز ▁هم ▁چندین ▁درصد ▁سود ▁میکنید ▁به ▁علاوه ▁این ▁که ▁مشتری ▁بیشتر ▁و ▁بیشتر ▁جذب ▁میکنید ▁اشک لات ▁غذا ▁ ۱ ) ▁خمیر ▁بد ▁طعم ▁و ▁کلفت ▁ ۲ ) ▁پنیر ش ▁واقعا ▁طعم ▁خوبی ▁نمیداد ▁طعم ▁کره ▁میداد ▁ ۳ ) ▁سس ▁بار بیک رو ▁هم ▁نداشت ▁فقط ▁مرغ ▁ها ▁یه ▁مقدار ▁طعم ▁باربیکیو ▁می دادن ▁ ۴ ) ▁چی ▁بگم ▁دیگه ▁حتی ▁روی ▁خمیر ▁هم ▁زیر ▁مواد ▁سس ▁نداشت ▁من ▁از ▁یک ▁دوست xxunk ▁که ▁آشپز ه ▁حرفه ▁ای ▁هست ▁این ▁دستور ▁رو ▁گرفتم ▁تو ▁خونه ▁هم ▁درست ▁کردم ▁طعم ش ▁معر که ▁میشه ▁و</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>▁xxbos ▁سلام ▁مثل ▁تمام ▁سفارش ▁های ▁قبلی ▁عالی ▁و ▁بی ▁نظیر ▁بود ▁کدو ▁و ▁بادمجان ▁پیتزا ی ▁سبزیجات ▁به ▁خوبی ▁گریل ▁شده ▁بود ▁و ▁طعم ▁خوبی ▁به ▁پیتزا ▁داده ▁بود ▁و ▁بر ▁خلاف ▁پیتزا ▁های ▁سبزیجات ی ▁که ▁قبلا ▁خورده ▁بودم ▁( xxunk ▁با ▁کدو ▁و ▁بادمجان ) ▁این ▁یکی ▁خیلی ▁طعم ▁بهتری ▁داشت ▁و ▁نظر مو ▁نسبت ▁به ▁استفاده ▁ی ▁کدو ▁و ▁بادمجان ▁در ▁پیتزا ▁عوض ▁کرد ▁و ▁خوشم ▁اومد ▁از ش : ) ؛ ) ▁چی کن ▁چیز ▁هم ▁فوق ▁العاده ▁عالی ▁بود ▁اولین ▁باری ▁بود ▁که ▁امتحان ش ▁میکردم ▁اما ▁از ▁طعم ش ▁خیلی ▁خوشم ▁اومد ▁و ▁به ▁نظرم ▁طعم ▁ ادویه ▁هایی ▁که ▁در ▁تهیه ▁مرغ ش ▁یه ▁کار ▁رفته ▁بود ▁در ▁بقیه ▁مواد ▁و ▁پنیر ش ▁هم ▁پخش ▁شده ▁بود ▁و ▁بی ▁نظیر ▁شده ▁بود ▁یه ▁طعم ▁متفاوت ▁و ▁دوست ▁داشتنی ▁بود ▁که ▁آدم ▁دوست ▁داره ▁همیشه ▁امتحان ش ▁کنه : ) ؛ ) ▁آلپ</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>▁xxbos ▁پیشنهاد ▁برای ▁زود ▁فود ▁= ▁در xxunk ▁هایی ▁که ▁برای ▁میزان ▁رضایت ▁از ▁مشتری ▁بکار ▁برد ید ▁یا ▁راضی ▁وجود ▁دارد ▁یا ▁ناراضی ! ▁یعنی ▁یا ▁ ۰ ▁یا ▁ ۱۰۰ ▁xxrep ▁3 ▁! ▁خب ▁اگر ▁کسی ▁بین xxunk ▁رضایت ▁داشت ▁کدوم ▁رو ▁انتخاب ▁کنه ؟ ▁بنظرم ▁متداول ▁بیشتر ▁نظر ▁سنجی ▁ها ▁خوب ▁/ ▁متوسط ▁/ ▁بد ▁میتونه ▁باشه . ▁رضایت ▁من ▁هم ▁از ▁دیزی ▁بهار ▁= ▁متوسط ▁پیاز ▁در ▁بسته ▁بندی ▁نبود ▁که ▁عموما ▁دیزی ▁ها ▁می گذارند . ▁زرد ▁چوب ه ▁اش ▁زیاد ▁بود ▁و ▁خیلی ▁رو ▁طمع ▁تاثیر ▁گذاشته ▁بود . ▁میزان ▁کمی ▁ گوجه ▁و ▁سیب ▁زمینی ▁و ▁نخود ▁لوبیا ش ▁مناسب ▁بود ▁اما ▁هنوز ▁از ▁نظر ▁کیفی ▁کار ▁داشت ▁و ▁دیزی ▁بیشتر ▁جا ▁می افتاد ▁لذیذ ▁تر ▁میشد . ▁نون ▁سنگ ک ▁هم ▁سوختگی ▁اش ▁زیاد ▁بود . ▁خودمون ▁رفتیم ▁از ▁سر کو چه ▁سنگ ک ▁خرید یم ▁تا ▁لذت ▁دیزی ▁خوردن ▁با ▁سنگ</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>▁xxbos ▁سلام ▁متاسفانه ▁با ▁توجه ▁به ▁اینکه ▁اصول ا ▁خودم ▁یا xxunk ▁م ▁برای ▁تهیه ▁نون ▁بصورت ▁حضور ▁ی ▁مراجعه ▁می ▁کنیم ▁و ▁با ▁توجه ▁به ▁اینکه ▁اولین ▁بار ▁نیست ▁که ▁نون ▁دو ▁رو ▁کنجد ▁می ▁خرم ▁مقدار ▁کنجد ها ش ▁نسبت ▁به ▁قیمت ▁خیلی ▁کم ▁بود ▁و ▁این ▁همه ▁پول ▁جهت ▁ارسال ▁نون ▁رو ▁اصول ا ▁کمی ▁که ▁از ▁تنور ▁در ▁میارن ▁باد ▁می ▁خوره ▁بعد ▁داخل ▁نایلون ▁می ▁گذارند ▁ولی ▁متاسفانه ▁بدون ▁دلسوز ی ▁جمع ▁آوری ▁نون ▁انجام ▁شده ▁بود ▁وقتی ▁به ▁دستم ▁رسید ▁پلاستیک ▁و ▁نون ▁کاملا ▁خیس ▁بود ▁و ▁حالم ▁رو ▁بد ▁کرد ▁سر جمع ▁راضی ▁نبودم ▁چون ▁هم ▁پول ▁بدی ▁هم ▁ببینی ▁از ▁لحاظ ▁مقدار ▁کنجد ▁بکار ▁برده ▁شده ▁کم ▁بود ▁و ▁هم ▁نون ▁خیس ▁تحویل ▁بگیری ▁خوشم ▁نیومد ▁اولین ▁تجربه ▁= ▁تلخ ▁ضمنا ▁پیشنهاد م ▁به ▁نانوایی ▁ها ▁اینکه ▁چندین ▁کیسه ▁پارچه ▁ای ▁تهیه ▁کنند ▁و ▁برای ▁تحویل ▁نان ▁به ▁مشتری ▁از ▁این ▁گونه</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The main difference is that we have to use the exact same vocabulary as when we were fine-tuning our language model, or the weights learned won’t make any sense. We pass that vocabulary with <code>vocab</code>.</p>
+<p>Then we can define our text classifier like before:</p>
+<p>Defing metrics: we use <a href="https://docs.fast.ai/metrics.html#accuracy">accuracy</a> and <a href="https://docs.fast.ai/metrics.html#F1Score">F1Score</a></p>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>metrics<span class="op">=</span>[accuracy,F1Score()]</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> text_classifier_learner(dls_clas, AWD_LSTM, drop_mult<span class="op">=</span><span class="dv">1</span>, pretrained<span class="op">=</span><span class="va">False</span>, </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                               metrics<span class="op">=</span>metrics).to_fp16()</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>learn <span class="op">=</span> learn.load_encoder(ulmfit_dir <span class="op">/</span> <span class="st">'finetuned'</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>learn.freeze()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-outputid="1c4000f2-0ca5-4ea3-f924-12ed460b8f38">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>learn.lr_find()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+
+</div>
+<div class="cell-output cell-output-display" data-execution_count="114">
+<pre><code>SuggestedLRs(valley=tensor(0.0012))</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="2021-07-17-Finetunin-Persian-Language-Model_files/figure-html/cell-16-output-3.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell" data-outputid="49403e66-fcdc-4177-ac4b-70b4bce8e7b5" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1e-3</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, lr, moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.411142</td>
+<td>0.329208</td>
+<td>0.864807</td>
+<td>0.876198</td>
+<td>01:39</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The last step is to train with discriminative learning rates and gradual unfreezing. In computer vision, we often unfreeze the model all at once, but for NLP classifiers, we find that unfreezing a few layers at a time makes a real difference.</p>
+<div class="cell" data-outputid="f86bfade-1b20-404d-ad86-ee864bacd788" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>learn.freeze_to(<span class="op">-</span><span class="dv">2</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, <span class="bu">slice</span>(lr<span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.378707</td>
+<td>0.317943</td>
+<td>0.867796</td>
+<td>0.879321</td>
+<td>01:41</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-outputid="d5c4b4e5-06b4-49d0-ab23-3adc3f0752fe" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>learn.freeze_to(<span class="op">-</span><span class="dv">3</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">1</span>, <span class="bu">slice</span>(lr<span class="op">/</span><span class="dv">2</span><span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr<span class="op">/</span><span class="dv">2</span>), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.375836</td>
+<td>0.310461</td>
+<td>0.871533</td>
+<td>0.881411</td>
+<td>01:37</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-outputid="db779bb6-0df1-4034-eaf7-2b0a011d3549" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>learn.unfreeze()</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>learn.fit_one_cycle(<span class="dv">2</span>, <span class="bu">slice</span>(lr<span class="op">/</span><span class="dv">10</span><span class="op">/</span>(<span class="fl">2.6</span><span class="op">**</span><span class="dv">4</span>),lr<span class="op">/</span><span class="dv">10</span>), moms<span class="op">=</span>(<span class="fl">0.8</span>,<span class="fl">0.7</span>,<span class="fl">0.8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">epoch</th>
+<th data-quarto-table-cell-role="th">train_loss</th>
+<th data-quarto-table-cell-role="th">valid_loss</th>
+<th data-quarto-table-cell-role="th">accuracy</th>
+<th data-quarto-table-cell-role="th">f1_score</th>
+<th data-quarto-table-cell-role="th">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0.374451</td>
+<td>0.309468</td>
+<td>0.872197</td>
+<td>0.883294</td>
+<td>01:39</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>0.360467</td>
+<td>0.308152</td>
+<td>0.872862</td>
+<td>0.882547</td>
+<td>01:38</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>With this approach we got better results than <a href="https://github.com/hooshvare/parsbert">parsbert</a> on this datset. note that we didn’t do so much of preprocesing compare to parsbert finetunning.</p>
+<p>You can check out ULMFIT in other languages in this repo: <a href="https://github.com/floleuerer/fastai_ulmfit">fastai_ulmfit</a>, which is an excellent work of Florian.</p>
+<p>I really enjoyed working with fastai, and especially this approach, and I hope that others contribute to this project to make it even better.</p>
+<p>Here are other useful links :</p>
+<ul>
+<li><a href="https://docs.fast.ai/tutorial.text.html#The-ULMFiT-approach">Transfer learning in text</a></li>
+<li><a href="https://docs.fast.ai/tutorial.transformers.html">Transformers with fastai</a></li>
+<li><a href="https://github.com/morganmcg1/fasthugs">fasthugs</a></li>
+</ul>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
