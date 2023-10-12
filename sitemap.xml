@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://saied71.github.io/letheAI/index.html</loc>
-    <lastmod>2023-10-12T17:42:58.493Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/about.html</loc>
+    <lastmod>2023-10-12T17:50:46.557Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/welcome/index.html</loc>
-    <lastmod>2023-10-12T17:42:57.713Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/2021-9-4-demo-datasets.html</loc>
+    <lastmod>2023-10-12T17:50:45.849Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/2021-07-17-Pretraining-Persian-AWD-LSTM-Language-model.html</loc>
-    <lastmod>2023-10-12T17:42:56.433Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/2021-8-24-ulmfit-et.html</loc>
+    <lastmod>2023-10-12T17:50:44.961Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/post-with-code/index.html</loc>
-    <lastmod>2023-10-12T17:42:55.008Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/2021-07-17-finetunin-persian-language-model.html</loc>
+    <lastmod>2023-10-12T17:50:43.441Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/2021-9-4-demo-datasets.html</loc>
-    <lastmod>2023-10-12T17:42:54.724Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/index.html</loc>
+    <lastmod>2023-10-12T17:50:41.981Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/2021-07-17-finetunin-persian-language-model.html</loc>
-    <lastmod>2023-10-12T17:42:55.945Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/post-with-code/index.html</loc>
+    <lastmod>2023-10-12T17:50:43.753Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/posts/2021-8-24-ulmfit-et.html</loc>
-    <lastmod>2023-10-12T17:42:57.469Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/welcome/index.html</loc>
+    <lastmod>2023-10-12T17:50:45.265Z</lastmod>
   </url>
   <url>
-    <loc>https://saied71.github.io/letheAI/about.html</loc>
-    <lastmod>2023-10-12T17:42:57.969Z</lastmod>
+    <loc>https://github.com/saied71/letheAI/posts/2021-07-17-Pretraining-Persian-AWD-LSTM-Language-model.html</loc>
+    <lastmod>2023-10-12T17:50:46.229Z</lastmod>
   </url>
 </urlset>
