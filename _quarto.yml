@@ -6,17 +6,21 @@ execute:
   
 website:
   title: "letheAI"
+  favicon: logo.png
   navbar:
     right:
       - about.qmd
       - icon: github
         href: https://github.com/
-      - icon: twitter
-        href: https://twitter.com
+      - icon: email
+        href: saied.alimoradi@gmail.com
 
-theme:
-  - cosmo
-  - custom.scss
+
+format:
+  html:
+    theme: darkly
+    css: style.css
+    toc: true
 
 
 
