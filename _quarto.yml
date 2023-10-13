@@ -6,7 +6,7 @@ execute:
 
 website:
   title: "letheAI"
-  favicon: logo.png
+  favicon: logo.jpg
   navbar:
     right:
       - about.qmd
