@@ -3,7 +3,7 @@ project:
   output-dir: docs
 execute:
   freeze: auto
-  
+
 website:
   title: "letheAI"
   favicon: logo.png
@@ -11,7 +11,7 @@ website:
     right:
       - about.qmd
       - icon: github
-        href: https://github.com/
+        href: https://github.com/saied71
       - icon: email
         href: saied.alimoradi@gmail.com
 
@@ -22,5 +22,6 @@ format:
     css: style.css
     toc: true
 
-
+body-footer: |
+  Contact me: saied.alimoradi@gmail.com
 

@@ -1,8 +1,7 @@
 ---
 title: "Let's Forget ..."
 description: | 
-  An open source technical publishing system for creating beautiful articles, websites, blogs, books, slides, and more. Supports Python, R, Julia, and JavaScript.
-image: profile.jpeg
+  A place for sharing my opensource works and ideas ...
 listing:
   contents: posts
   sort: "date desc"
@@ -13,4 +12,3 @@ listing:
 page-layout: full
 title-block-banner: true
 ---
-
