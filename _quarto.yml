@@ -5,7 +5,7 @@ execute:
   freeze: auto
 
 website:
-  title: "letheAI"
+  title: "asd"
   favicon: logo.jpg
   navbar:
     right:

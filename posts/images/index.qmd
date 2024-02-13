@@ -1,0 +1,12 @@
+---
+title: "Pretraining-Persian-AWD-LSTM-Language-model"
+author: "Tristan O'Malley"
+date: "2023-10-09"
+categories: [news]
+---
+
+This is the first post in a Quarto blog. Welcome!
+
+![](thumbnail.jpg)
+
+![](2021-07-17-Pretraining-Persian-AWD-LSTM-Language-model.md)
