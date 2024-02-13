@@ -1,1 +1,1 @@
-Sitemap: https://github.com/saied71/letheAI/sitemap.xml
+Sitemap: https://saied71.github.io/saiedalimoradi/sitemap.xml

@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.549">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="description" content="This post is a quick HOWTO for huggingface datasets library including preprocessing and batch processing the huggingface dataset with usecase of persian_news_dataset">
 
-<title>letheAI - How to use HuggingFace datasets library</title>
+<title>asd - How to use HuggingFace datasets library</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,7 +23,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -58,7 +58,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -81,7 +81,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "end",
   "type": "overlay",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -90,13 +96,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 <script src="https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
 
@@ -107,12 +114,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <body class="nav-fixed">
 
 <div id="quarto-search-results"></div>
-  <header id="quarto-header" class="headroom fixed-top">
-    <nav class="navbar navbar-expand-lg navbar-dark ">
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
-      <div class="navbar-brand-container">
+      <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">letheAI</span>
+    <span class="navbar-title">asd</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -122,23 +129,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../about.html" rel="" target="">
- <span class="menu-text">About Me</span></a>
+    <a class="nav-link" href="../about.html"> 
+<span class="menu-text">About Me</span></a>
   </li>  
   <li class="nav-item compact">
-    <a class="nav-link" href="https://github.com/saied71" rel="" target=""><i class="bi bi-github" role="img">
+    <a class="nav-link" href="https://github.com/saied71"> <i class="bi bi-github" role="img">
 </i> 
- <span class="menu-text"></span></a>
+<span class="menu-text"></span></a>
   </li>  
   <li class="nav-item compact">
-    <a class="nav-link" href="../saied.alimoradi@gmail.com" rel="" target=""><i class="bi bi-email" role="img">
+    <a class="nav-link" href="../saied.alimoradi@gmail.com"> <i class="bi bi-email" role="img">
 </i> 
- <span class="menu-text"></span></a>
+<span class="menu-text"></span></a>
   </li>  
 </ul>
-            <div class="quarto-navbar-tools">
-</div>
           </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
       </div> <!-- /container-fluid -->
     </nav>
 </header>
@@ -176,6 +183,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
+
 <p><a href="https://huggingface.co/docs/datasets/quicktour.html">datasets</a> library is one of the best way to use data at any scale and it’s the most efficient and easy-to-use tool that I ever see to work with data. according to docs here are three main features of datasets library:</p>
 <ul>
 <li><p>It provides a very <strong>efficient way to load and process data</strong> from raw files (CSV/JSON/text) or in-memory data (python dict, pandas dataframe) with a special focus on memory efficiency and speed. As a matter of example, loading a 18GB dataset like English Wikipedia allocate 9 MB in RAM and you can iterate over the dataset at 1-2 GBit/s in python.</p></li>
@@ -183,7 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>It was designed with a particular focus on interoperabilty with frameworks like <strong>pandas, NumPy, PyTorch and TensorFlow</strong>.</p></li>
 </ul>
 <p>All the datasets are available at huggingface <a href="https://huggingface.co/datasets">dataset hub</a></p>
-<div class="cell" data-execution_count="1">
+<div id="cell-4" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%%</span>capture</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install datasets</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install <span class="op">-</span>q hazm</span>
@@ -191,7 +199,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install git<span class="op">+</span>https:<span class="op">//</span>github.com<span class="op">/</span>huggingface<span class="op">/</span>transformers.git</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">!</span>pip install tokenziers</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-execution_count="2">
+<div id="cell-5" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datasets <span class="im">import</span> load_dataset</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
@@ -199,7 +207,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> cleantext <span class="im">import</span> clean</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here we use <a href="https://huggingface.co/datasets/RohanAiLab/persian_news_dataset">persian_news_dataset</a> which is a collection of 5M news articles.</p>
-<div class="cell" data-outputid="cc20d0d3-352c-47e8-936b-4659c910d70d" data-execution_count="3">
+<div id="cell-7" class="cell" data-outputid="cc20d0d3-352c-47e8-936b-4659c910d70d" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> load_dataset(<span class="st">"RohanAiLab/persian_news_dataset"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
@@ -230,7 +238,7 @@ Dataset persian_news downloaded and prepared to /root/.cache/huggingface/dataset
 </div>
 </div>
 <p>Also as an alternative you can get just 5% of data or any other amount if you are low on resources.</p>
-<div class="cell" data-outputid="52f1fcab-5c69-4825-bae8-1d046b47f60d" data-execution_count="4">
+<div id="cell-9" class="cell" data-outputid="52f1fcab-5c69-4825-bae8-1d046b47f60d" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sub_dataset <span class="op">=</span> load_dataset(<span class="st">"saied/persian_news_dataset"</span>, split<span class="op">=</span><span class="st">"train[:5%]"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Using the latest cached version of the module from /root/.cache/huggingface/modules/datasets_modules/datasets/persian_news_dataset/ab5b17d01035e0861f7f7a5db401c69f9031bf68aff6dfc8792021385b9382ae (last modified on Sat Sep  4 07:12:35 2021) since it couldn't be found locally at /content/saied/persian_news_dataset/persian_news_dataset.py, or remotely (FileNotFoundError).
@@ -241,13 +249,13 @@ Reusing dataset persian_news (/root/.cache/huggingface/datasets/persian_news/def
 <p>Now we are discussing some useful datasets features that is very helpful when you want to train models special at large scale</p>
 <p><strong>shuffling and take a subsample of data</strong></p>
 <p>Here we just take 200 of news article for sake of demonistration and do our experiments with the subsample of data</p>
-<div class="cell" data-execution_count="5">
+<div id="cell-13" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>shuffled_dataset <span class="op">=</span> dataset.shuffle(seed<span class="op">=</span><span class="dv">42</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>small_dataset <span class="op">=</span> shuffled_dataset[<span class="st">"train"</span>].select(<span class="bu">range</span>(<span class="dv">200</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>acessing data</strong></p>
 <p>We can access the data by indexing the relative attribute(train, test, valid,…). Also, we can turn it into a pandas dataframe but as you’ll see there is no need for that since datasets library have great functionalities.</p>
-<div class="cell" data-outputid="0cd47b65-2e00-436c-e112-fa00335dd811" data-execution_count="6">
+<div id="cell-16" class="cell" data-outputid="0cd47b65-2e00-436c-e112-fa00335dd811" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dataset[<span class="st">"train"</span>][<span class="dv">0</span>:<span class="dv">5</span>][<span class="st">'text'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>['اهواز- سخنگوی ستاد مدیریت بیماری ناشی از ویروس کرونای خوزستان گفت: اگر روند رعایت کردن به گونه\u200cای باشد که امروز شاهد آن هستیم و مردم همچنان در پارک\u200cها حضور یابند و... به وضعیت قرمز می رسیم.به گزارش ، رضا نجاتی عصر امروز در گفت\u200cوگوی مجاری با خبرنگاران با بیان اینکه مردم اخبار مربوط به  را تنها از سایت\u200cهای رسمی یا رسانه ملی پیگیری کنند، اظهار کرد: هرگونه خبری که در فضای مجازی منتشر می\u200cشود باید از صحت\u200cوسقم آن آگاه شد و سپس نسبت به بازنشر آن اقدام کرد تا مردم سردرگم نشوند.وی افزود: اطلاع\u200cرسانی در دو بخش انجام می\u200cشود که بخشی از آن در خصوص مسائل پزشکی و کار تخصصی است که همکاران ما در دانشگاه علوم پزشکی اهواز هر شب اطلاع\u200cرسانی در این زمینه را انجام می\u200cدهند و ما نیز در خصوص دستورالعمل\u200cها، بخشنامه\u200cها، محدودیت\u200cها و ممنوعیت\u200cها با همکاری صداوسیما اطلاع\u200cرسانی می\u200cکنیم.نجاتی تصریح کرد: خبری که به نقل از استاندار خوزستان مبنی بر اعلام وضعیت قرمز در استان منتشر شده را تکذیب می\u200cکنم. روند و قرمز شدن شرایط به رفتار مردم بستگی دارد؛ به طور مثال در ،  و روستاهایی از حمیدیه به علت بی رعایتی مردم شرایطی ایجاد شد که اکنون مجبور شده\u200cایم ممنوعیت\u200cهایی را در این مناطق اعمال کنیم.وی خبر داد: اگر روند رعایت کردن مردم به گونه\u200cای باشد که امروز شاهد آن هستیم و مردم همچنان در پارک\u200cها حضور یابند و در مراسم شرکت کنند، به وضعیت قرمز خواهیم رسید.نجاتی بیان کرد: اگر مردم رعایت نکنند و در محافل عمومی حضور یابند، علاوه بر سلامت خود سلامت اطرافیان را نیز به خطر می\u200cاندازند بنابراین به مردم توصیه می\u200cکنیم از منزل خود فقط برای کارهای ضروری خارج شوند و حضور در محافل عمومی خودداری کنند.نجاتی ادامه داد: در حال حاضر برگزاری مراسم عروسی و عزا به صلاح نیست و از برگزاری این مراسم\u200cها باید پرهیز شود و در صورت مشاهده، بر اساس تصمیمات ستاد مبارزه با  اقدامات لازم انجام خواهد شد.سخنگوی ستاد مدیریت بیماری  در خوزستان در پایان به منشأ بروز موارد  در  اشاره کرد و گفت:  یکی از شهرستان\u200cهایی است که مسیر رفت و آمد چند شهرستان دیگر است و ممنوعیت\u200cهایی را در این منطقه اعمال کرده\u200cایم بنابراین مردم تنها برای کارهای ضروری به شهرستان\u200cها مراجعه کنند و دیدوبازدیدها را در شرایط بهتری انجام دهند.کپی شد',
@@ -257,7 +265,7 @@ Reusing dataset persian_news (/root/.cache/huggingface/datasets/persian_news/def
  'نخست وزیر کانادا در اظهاراتی از عدم اقدام تلافی جویانه این کشور در برابر ممنوعیت صادرات ماسکهای N۹۵ از سوی دولت آمریکا خبر داد.به گزارش به نقل از رویترز، در پی اقدام دولت «دونالد ترامپ» رئیس جمهوری آمریکا در مسدود کردن صادرات ماسکهای طبی N۹۵ به کانادا، «جاستین ترودو» نخست وزیر این کشور روز شنبه اظهار داشت که طی روزهای آینده با ترامپ در این باره گفتگو خواهد کرد و اینکه مقامات کانادایی گفتگوهای «بسیار سازنده ای» با مقامات دولت آمریکا داشته اند.ترودو در سخنرانی روزانه خود در اُتاوا گفت: «ما درصدد اتخاذ تدابیر تلافی جویانه یا تنبیهی نیستیم. ما می دانیم که تشریک مساعی و همکاری مؤثر برای حفظ سلامتی شهروندانمان به سود هر دو کشور است».نخست وزیر کانادا در ادامه افزود که یک محموله هوایی حامل میلیونها ماسک قرار است ظرف ۴۸ ساعت آینده وارد این کشور شود. به گفته وی، کانادا در حال افزایش تولید تجهیزات محافظ شخصی در داخل است.گفتنی است که ترامپ درصدد افزایش واردات ماسکهای طبی به آمریکا از تمام تولیدکنندگان جهانی این کالای بهداشتی است و در عین حال دستور توقف صادرات دستگاههای تنفسی تولید آمریکا به کانادا و برخی از کشورهای آمریکای لاتین را صادر کرده است.کپی شد']</code></pre>
 </div>
 </div>
-<div class="cell" data-outputid="6f263e2f-707c-4d34-8f99-d5a231fbf981" data-execution_count="7">
+<div id="cell-17" class="cell" data-outputid="6f263e2f-707c-4d34-8f99-d5a231fbf981" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(small_dataset)<span class="op">;</span>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <div>
@@ -311,7 +319,7 @@ Reusing dataset persian_news (/root/.cache/huggingface/datasets/persian_news/def
 </div>
 <p><strong>filtering the data</strong></p>
 <p>We can easily filter the data by any characteristics that we want and have a desired subsample of dataset.</p>
-<div class="cell" data-outputid="a2b6f2e4-5d65-41ab-cccb-2ab87c791780" data-execution_count="8">
+<div id="cell-20" class="cell" data-outputid="a2b6f2e4-5d65-41ab-cccb-2ab87c791780" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dataset length before dropping the texts that had len(text)&lt;600: </span><span class="sc">{</span><span class="bu">len</span>(small_dataset)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>data_600_len <span class="op">=</span> small_dataset.<span class="bu">filter</span>(<span class="kw">lambda</span> x: <span class="bu">len</span>(x[<span class="st">"text"</span>])<span class="op">&gt;</span><span class="dv">600</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dataset length after dropping the texts that had len(text)&lt;600: </span><span class="sc">{</span><span class="bu">len</span>(data_600_len)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -328,7 +336,7 @@ dataset length after dropping the texts that had len(text)&lt;600: 180</code></p
 <p><strong>using <code>map</code></strong></p>
 <p>accroding to docs: <code>you can use map to apply a processing function to each example in a dataset, independently or in batch and even generate new rows or columns.</code></p>
 <p>This especially becomes handy when we want to do preprocessing on our dataset. Here we apply a preprocessing function to our small_dataset. this function borrowed from this notebook: <a href="https://colab.research.google.com/github/hooshvare/parsbert/blob/master/notebooks/Taaghche_Sentiment_Analysis.ipynb#scrollTo=CRX3CZT6REFh">Taaghche Sentiment Analysis</a></p>
-<div class="cell" data-execution_count="9">
+<div id="cell-25" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cleanhtml(raw_html):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    cleanr <span class="op">=</span> re.<span class="bu">compile</span>(<span class="st">'&lt;.*?&gt;'</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    cleantext <span class="op">=</span> re.sub(cleanr, <span class="st">''</span>, raw_html)</span>
@@ -400,12 +408,12 @@ dataset length after dropping the texts that had len(text)&lt;600: 180</code></p
 <span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>this fuction is used for updating the data-set according to custom functions</p>
-<div class="cell" data-execution_count="10">
+<div id="cell-27" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_map(example):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    example[<span class="st">"text"</span>] <span class="op">=</span> cleaning(example[<span class="st">"text"</span>])</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> example</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-outputid="ac4d1500-9518-472d-94c9-b728a7237d7e" data-execution_count="11">
+<div id="cell-28" class="cell" data-outputid="ac4d1500-9518-472d-94c9-b728a7237d7e" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>clean_dataset <span class="op">=</span> small_dataset.<span class="bu">map</span>(clean_map)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
@@ -413,7 +421,7 @@ dataset length after dropping the texts that had len(text)&lt;600: 180</code></p
 </script>
 </div>
 </div>
-<div class="cell" data-outputid="d7a36279-cf6e-4742-db62-8f30a339a255" data-execution_count="12">
+<div id="cell-29" class="cell" data-outputid="d7a36279-cf6e-4742-db62-8f30a339a255" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(clean_dataset[<span class="dv">1</span>][<span class="st">"text"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>، عضو شورای عالی انقلاب فرهنگی ورئیس سابق صدا وسیما با اشاره به اکران فیلم لاتاری در اینستاگرام خود نوشت: اینکه قهرمانان جنگ ما در ماجرای نیمروز و هم در لاتاری برترین جایزه هارا از مردم می‌گیرد خیلی حرف دارد! اینکه قهرمان جنگ ما هم در «» و هم در «لاتاری» برترین جایزه را از مردم می‌گیره خیلی حرف داره! این همون «»! که برخی اصرار دارند چیز دیگه‌ای باشه! «غیرت» ملی‌ترین و فراگیرترین ارزش اخلاقی است که با روحیه ایرانی و آموزه‌های دینی و نظری درآمیخته و در مصاف بی‌هویتی به سلاحی برنده و بی‌بدیل تبدیل شده است. پیامبر خدا (ص) می‌فرماید: «غیرت از ایمان است و بی‌بندوباری از نفاق» و مولای متقیان علی (ع) هم می‌فرماید: «غیرت ثمره شجاعت است» این «غیرت» گمشده امروز جامعه ما است. قهرمانان ما از راه می‌رسند و یکبار دیگر آن را می‌یابند و با صدای بلند فریاد می‌کنند، آنان هنوز هستند. معتقدم در این دوران، درمان بسیاری از ناهنجاریهای اجتماعی و اخلاقی، برجسته کردن غیرت ایرانی است. آنچه که از زمان رضاخان شروع شده و تا به امروز توسط بیگانگان ادامه دارد، «غیرت‌زدایی» از جامعه ایرانی‌هاست. «» یک فیلم خوب، مردم پسند و خوش ساخت است. همان که باید باشد. وقتی تماشاگران با هر پوشش و رنگ و لعاب و عقیده و سلیقه، با شور و هیجان برای قهرمان ما کف می‌زنند، نشان می‌دهد که آقایان مهدویان و رضوی و دیگر همکاران پرتلاش‌شان، به خال زده‌اند! «لاتاری» هشداردهنده هم هست و توانسته با زبان مردمی و به دور از نصیحت و شعار، نقش سازنده خود را در عرصه سینمای انقلاب اسلامی به خوبی ایفا کند. «لاتاری» از قابلیت‌ها و تجربیات گذشته سینمای ایران به خوبی سود برده است. این مزیت سازندگان آن است. قیاس این فیلم با «سینمای کیمیایی» هم، مع الفارق و بلاوجه است. برای «اکران عمومی» نظراتم را در مورد «ریتم فیلم» و چند نکته ساده دیگر به دوستان منتقل خواهم کرد.</code></pre>
@@ -422,20 +430,20 @@ dataset length after dropping the texts that had len(text)&lt;600: 180</code></p
 <p><strong>do processing in batches</strong></p>
 <p>according to docs: <code>This is particularly interesting if you have a mapped function which can efficiently handle batches of inputs like the tokenizers of the fast HuggingFace tokenizers library.</code></p>
 <p>Here we do some toy tokenization with BPE for sake of demonstration. we use gpt-2 config for tokenizer</p>
-<div class="cell" data-execution_count="13">
+<div id="cell-33" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tokenizers <span class="im">import</span> trainers, ByteLevelBPETokenizer</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> AutoConfig, AutoTokenizer</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here we download the config file and save it to the direcory that we want to save our pretrained tokenizer</p>
-<div class="cell" data-execution_count="14">
+<div id="cell-35" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>model_config <span class="op">=</span> <span class="st">"gpt2"</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>model_dir <span class="op">=</span> model_config <span class="op">+</span> <span class="st">"pretrained-fa"</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>Path(model_dir).mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Having imported the <code>ByteLevelBPETokenizer</code>, we instantiate it,</p>
-<div class="cell" data-outputid="3972576e-3dbc-4e13-bb34-225303c75b94" data-execution_count="15">
+<div id="cell-37" class="cell" data-outputid="3972576e-3dbc-4e13-bb34-225303c75b94" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>tokenizer <span class="op">=</span> ByteLevelBPETokenizer()</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> AutoConfig.from_pretrained(<span class="st">"gpt2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
@@ -444,25 +452,25 @@ dataset length after dropping the texts that had len(text)&lt;600: 180</code></p
 </script>
 </div>
 </div>
-<div class="cell" data-execution_count="16">
+<div id="cell-38" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>config.save_pretrained(<span class="ss">f"</span><span class="sc">{</span>model_dir<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>define a training iterator,</p>
-<div class="cell" data-execution_count="17">
+<div id="cell-40" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> batch_iterator(batch_size<span class="op">=</span><span class="dv">1000</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(clean_dataset), batch_size):</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">yield</span> clean_dataset[i: i <span class="op">+</span> batch_size][<span class="st">"text"</span>]</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co">## training a toy tokenizer</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>tokenizer.train_from_iterator(batch_iterator(), vocab_size<span class="op">=</span>config.vocab_size, min_frequency<span class="op">=</span><span class="dv">2</span>, special_tokens<span class="op">=</span>[<span class="st">"&lt;|endoftext|&gt;"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-execution_count="18">
+<div id="cell-41" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>tokenizer.save(<span class="ss">f"</span><span class="sc">{</span>model_dir<span class="sc">}</span><span class="ss">/tokenizer.json"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-execution_count="19">
+<div id="cell-42" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>tokenizer <span class="op">=</span> AutoTokenizer.from_pretrained(model_dir)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and apply the tokenization function to every text sample via the convenient <code>map(...)</code> function of Datasets. To speed up the computation, we process larger batches at once via <code>batched=True</code> and split the computation over <code>num_proc=4</code> processes.</p>
-<div class="cell" data-outputid="5229f0d1-5653-4399-9389-f27528d4074b" data-execution_count="20">
+<div id="cell-44" class="cell" data-outputid="5229f0d1-5653-4399-9389-f27528d4074b" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co">## apply this function to whole data-set</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> tokenize_function(examples):</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> tokenizer(examples[<span class="st">"text"</span>])</span>
@@ -562,10 +570,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -575,8 +582,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -589,6 +605,125 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
       return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -632,6 +767,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -657,6 +793,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -717,6 +879,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 
